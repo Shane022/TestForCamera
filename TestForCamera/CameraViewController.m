@@ -12,6 +12,9 @@
 #import "CameraToolBarView.h"
 #import "UIActionSheet+Blocks.h"
 
+//#define FOCUSING
+typedef void(^PropertyChangeBlock)(AVCaptureDevice *captureDevice);
+
 @interface CameraViewController ()
 
 @property (nonatomic, strong) AVCaptureDevice *device;
@@ -58,7 +61,12 @@
     UIPinchGestureRecognizer *pinchGesture = [[UIPinchGestureRecognizer alloc] initWithTarget:self action:@selector(handlePinchGesture:)];
     pinchGesture.delegate = self;
     [self.view addGestureRecognizer:pinchGesture];
-    
+    // 添加点击手势对焦
+#ifdef FOCUSING
+    UITapGestureRecognizer *tapGesture = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(tapScreen:)];
+    tapGesture.delegate = self;
+    [self.view addGestureRecognizer:tapGesture];
+#endif
     _beginGestureScale = 1.0;
     _effectiveScale = 1.0;
     _isFrontCamera = NO;
@@ -135,7 +143,9 @@
     output2VideoConnection.videoOrientation = [self videoOrientationFromCurrentDeviceOrientation];
     
     self.previewLayer = [[AVCaptureVideoPreviewLayer alloc] initWithSession:self.session];
-    [self.previewLayer setVideoGravity:AVLayerVideoGravityResizeAspectFill];
+//    [self.previewLayer setVideoGravity:AVLayerVideoGravityResizeAspectFill];
+    [self.previewLayer setVideoGravity:AVLayerVideoGravityResizeAspect];
+
     self.previewLayer.connection.videoOrientation = [self videoOrientationFromCurrentDeviceOrientation];
     self.previewLayer.frame = self.view.bounds;
     [self.view.layer addSublayer:self.previewLayer];
@@ -240,9 +250,9 @@
     [UIActionSheet showInView:self.bgView withTitle:@"选择图片压缩比" cancelButtonTitle:@"取消" destructiveButtonTitle:nil otherButtonTitles:@[@"0",@"0.5",@"1"] tapBlock:^(UIActionSheet * _Nonnull actionSheet, NSInteger buttonIndex) {
         if (buttonIndex == 0) {
             _compressionQuality = 0;
-        } else if (buttonIndex == 0.5) {
-            _compressionQuality = 0.5;
         } else if (buttonIndex == 1) {
+            _compressionQuality = 0.5;
+        } else if (buttonIndex == 2) {
             _compressionQuality = 1;
         }
     }];
@@ -285,6 +295,41 @@
     }
 }
 
+-(void)tapScreen:(UITapGestureRecognizer *)tapGesture{
+    CGPoint point= [tapGesture locationInView:self.bgView];
+    //将UI坐标转化为摄像头坐标
+    CGPoint cameraPoint= [self.previewLayer captureDevicePointOfInterestForPoint:point];
+    [self focusWithMode:AVCaptureFocusModeAutoFocus exposureMode:AVCaptureExposureModeAutoExpose atPoint:cameraPoint];
+}
+
+-(void)focusWithMode:(AVCaptureFocusMode)focusMode exposureMode:(AVCaptureExposureMode)exposureMode atPoint:(CGPoint)point{
+    [self changeDeviceProperty:^(AVCaptureDevice *captureDevice) {
+        if ([captureDevice isFocusModeSupported:focusMode]) {
+            [captureDevice setFocusMode:AVCaptureFocusModeAutoFocus];
+        }
+        if ([captureDevice isFocusPointOfInterestSupported]) {
+            [captureDevice setFocusPointOfInterest:point];
+        }
+        if ([captureDevice isExposureModeSupported:exposureMode]) {
+            [captureDevice setExposureMode:AVCaptureExposureModeAutoExpose];
+        }
+        if ([captureDevice isExposurePointOfInterestSupported]) {
+            [captureDevice setExposurePointOfInterest:point];
+        }
+    }];
+}
+
+-(void)changeDeviceProperty:(PropertyChangeBlock)propertyChange{
+    NSError *error;
+    //注意改变设备属性前一定要首先调用lockForConfiguration:调用完之后使用unlockForConfiguration方法解锁
+    if ([self.device lockForConfiguration:&error]) {
+        propertyChange(self.device);
+        [self.device unlockForConfiguration];
+    }else{
+        NSLog(@"设置设备属性过程发生错误，错误信息：%@",error.localizedDescription);
+    }
+}
+
 #pragma mark - TakePhoto
 - (void)onHitBtnTakePhoto:(id)sender {
     AVCaptureConnection *stillImageConnection = [self.stillImageOutput connectionWithMediaType:AVMediaTypeVideo];
@@ -324,9 +369,10 @@
         CGFloat holeHeight = holeWidth * 4/3;
         CGRect rect = CGRectMake(margionLeft, (screenHeight-holeHeight)/2, holeWidth, holeHeight);
         // TODO:  此时得到的image的scale为1，imageOrientation为right
-        UIImage *imageTem = [UIImage imageWithData:jpegData scale:1];
+        UIImage *imageTem = [UIImage imageWithData:jpegData scale:[UIScreen mainScreen].scale];
         // 重绘image
-        UIGraphicsBeginImageContext(CGSizeMake(self.view.frame.size.width, self.view.frame.size.height));
+//        UIGraphicsBeginImageContext(imageTem.size);
+        UIGraphicsBeginImageContext(self.view.frame.size);
         [imageTem drawInRect:CGRectMake(0, 0, self.view.frame.size.width, self.view.frame.size.height)];
         imageTem = UIGraphicsGetImageFromCurrentImageContext();
         UIGraphicsEndImageContext();
@@ -337,7 +383,7 @@
 
         // 保存裁剪后的图片到相册
         // TODO：照片保存到相册之前需要旋转
-        jpegData = UIImageJPEGRepresentation(clippedImage, 1);
+        jpegData = UIImageJPEGRepresentation(clippedImage, _compressionQuality);
         
         // set UIAlertAction
         UIAlertAction *confirmAction = [UIAlertAction actionWithTitle:@"保存" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {

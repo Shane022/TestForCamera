@@ -10,11 +10,11 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "TestForCamera/CameraViewController.m"
-            timestampString = "492587105.597974"
+            timestampString = "492597646.110362"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "124"
-            endingLineNumber = "124"
+            startingLineNumber = "132"
+            endingLineNumber = "132"
             landmarkName = "-setupCamera"
             landmarkType = "5">
          </BreakpointContent>
