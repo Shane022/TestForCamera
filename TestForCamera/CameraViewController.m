@@ -8,6 +8,9 @@
 
 #import "CameraViewController.h"
 #import "HollowOutView.h"
+#import "UIImage+ClipImage.h"
+#import "CameraToolBarView.h"
+#import "UIActionSheet+Blocks.h"
 
 @interface CameraViewController ()
 
@@ -17,12 +20,16 @@
 @property (nonatomic, strong) AVCaptureSession *session;
 @property (nonatomic, strong) AVCaptureVideoPreviewLayer *previewLayer;
 @property (nonatomic, strong) HollowOutView *bgView;
+@property (nonatomic, strong) CameraToolBarView *toolBarView;
 
 @end
 
 @implementation CameraViewController
 {
     BOOL _isFrontCamera;
+    CGFloat _beginGestureScale;
+    CGFloat _effectiveScale;
+    CGFloat _compressionQuality;    // ImageCompressionQuality
 }
 
 - (void)viewDidLoad {
@@ -40,10 +47,22 @@
 
 #pragma mark - SetupLayoutAndInitData
 - (void)setupLayoutAndInitData {
-    self.navigationItem.leftBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:@"转换" style:UIBarButtonItemStyleDone target:self action:@selector(onHitBtnSwitchCamera:)];
-    self.navigationItem.rightBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:@"拍照" style:UIBarButtonItemStyleDone target:self action:@selector(onHitBtnTakePhoto:)];
-
+    self.toolBarView = [[CameraToolBarView alloc] initWithFrame:CGRectMake(0, 0, self.view.frame.size.width, 44)];
+    [self.navigationController.navigationBar addSubview:self.toolBarView];
+    [self.toolBarView.btnSnap addTarget:self action:@selector(onHitBtnTakePhoto:) forControlEvents:UIControlEventTouchUpInside];
+    [self.toolBarView.btnSwitchCamera addTarget:self action:@selector(onHitBtnSwitchCamera:) forControlEvents:UIControlEventTouchUpInside];
+    [self.toolBarView.btnImageCompress addTarget:self action:@selector(onHitBtnChangeImageCompressQuality:) forControlEvents:UIControlEventTouchUpInside];
+    [self.toolBarView.btnSessionPreset addTarget:self action:@selector(onHitBtnChangeAVCaptureSessionPreset:) forControlEvents:UIControlEventTouchUpInside];
+    
+    // 添加缩放手势调整焦距
+    UIPinchGestureRecognizer *pinchGesture = [[UIPinchGestureRecognizer alloc] initWithTarget:self action:@selector(handlePinchGesture:)];
+    pinchGesture.delegate = self;
+    [self.view addGestureRecognizer:pinchGesture];
+    
+    _beginGestureScale = 1.0;
+    _effectiveScale = 1.0;
     _isFrontCamera = NO;
+    _compressionQuality = 1;
 }
 
 #pragma mark - CheckCameraAuth
@@ -101,7 +120,8 @@
     [self.stillImageOutput setOutputSettings:outputSettings];
     
     self.session = [[AVCaptureSession alloc] init];
-    self.session.sessionPreset = AVCaptureSessionPresetHigh;
+    // 分辨率
+//    self.session.sessionPreset = AVCaptureSessionPresetHigh;
     
     if ([self.session canAddInput:self.input]) {
         [self.session addInput:self.input];
@@ -111,13 +131,13 @@
     }
     
 //    CGSize size = self.view.bounds.size;
+    AVCaptureConnection *output2VideoConnection = [self.stillImageOutput connectionWithMediaType:AVMediaTypeVideo];
+    output2VideoConnection.videoOrientation = [self videoOrientationFromCurrentDeviceOrientation];
+    
     self.previewLayer = [[AVCaptureVideoPreviewLayer alloc] initWithSession:self.session];
-    [self.previewLayer setVideoGravity:AVLayerVideoGravityResizeAspect];
+    [self.previewLayer setVideoGravity:AVLayerVideoGravityResizeAspectFill];
+    self.previewLayer.connection.videoOrientation = [self videoOrientationFromCurrentDeviceOrientation];
     self.previewLayer.frame = self.view.bounds;
-    [self.view.layer addSublayer:self.previewLayer];
-    
-    self.previewLayer.frame = self.view.bounds;
-    
     [self.view.layer addSublayer:self.previewLayer];
     
     self.bgView = [[HollowOutView alloc] initWithFrame:self.view.bounds];
@@ -147,12 +167,13 @@
         }
             break;
         default:
+
             break;
     }
     return orientation;
 }
 
-#pragma mark - ModifyCameraSettings
+#pragma mark - CameraSettings
 - (void)onHitBtnSwitchCamera:(id)sender {
     AVCaptureDevicePosition cameraPosition;
     if (_isFrontCamera) {
@@ -175,13 +196,103 @@
     _isFrontCamera = !_isFrontCamera;
 }
 
+- (void)onHitBtnChangeAVCaptureSessionPreset:(id)sender {
+    /*
+     AVCaptureSessionPreset共11种，仅列举Photo,high,medium,low,inputpriority
+     NSString *const  AVCaptureSessionPresetPhoto;
+     NSString *const  AVCaptureSessionPresetHigh;
+     NSString *const  AVCaptureSessionPresetMedium;
+     NSString *const  AVCaptureSessionPresetLow;
+     NSString *const  AVCaptureSessionPreset352x288;
+     NSString *const  AVCaptureSessionPreset640x480;
+     NSString *const  AVCaptureSessionPreset1280x720;
+     NSString *const  AVCaptureSessionPreset1920x1080;
+     NSString *const  AVCaptureSessionPresetiFrame960x540;
+     NSString *const  AVCaptureSessionPresetiFrame1280x720;
+     NSString *const  AVCaptureSessionPresetInputPriority;
+     */
+    [UIActionSheet showInView:self.bgView withTitle:@"选择分辨率" cancelButtonTitle:@"取消" destructiveButtonTitle:nil otherButtonTitles:@[@"AVCaptureSessionPresetPhoto",@"AVCaptureSessionPresetHigh",@"AVCaptureSessionPresetMedium",@"AVCaptureSessionPresetLow",@"AVCaptureSessionPresetInputPriority"] tapBlock:^(UIActionSheet * _Nonnull actionSheet, NSInteger buttonIndex) {
+        if (buttonIndex == 0) {
+            [self.session beginConfiguration];
+            self.session.sessionPreset = AVCaptureSessionPresetPhoto;
+            [self.session commitConfiguration];
+        } else if (buttonIndex == 1) {
+            [self.session beginConfiguration];
+            self.session.sessionPreset = AVCaptureSessionPresetHigh;
+            [self.session commitConfiguration];
+        } else if (buttonIndex == 2) {
+            [self.session beginConfiguration];
+            self.session.sessionPreset = AVCaptureSessionPresetMedium;
+            [self.session commitConfiguration];
+        } else if (buttonIndex == 3) {
+            [self.session beginConfiguration];
+            self.session.sessionPreset = AVCaptureSessionPresetLow;
+            [self.session commitConfiguration];
+        } else if (buttonIndex == 4) {
+            [self.session beginConfiguration];
+            self.session.sessionPreset = AVCaptureSessionPresetInputPriority;
+            [self.session commitConfiguration];
+        }
+    }];
+}
+
+- (void)onHitBtnChangeImageCompressQuality:(id)sender {
+    [UIActionSheet showInView:self.bgView withTitle:@"选择图片压缩比" cancelButtonTitle:@"取消" destructiveButtonTitle:nil otherButtonTitles:@[@"0",@"0.5",@"1"] tapBlock:^(UIActionSheet * _Nonnull actionSheet, NSInteger buttonIndex) {
+        if (buttonIndex == 0) {
+            _compressionQuality = 0;
+        } else if (buttonIndex == 0.5) {
+            _compressionQuality = 0.5;
+        } else if (buttonIndex == 1) {
+            _compressionQuality = 1;
+        }
+    }];
+}
+
+- (void)handlePinchGesture:(UIPinchGestureRecognizer *)recognizer {
+    // 缩放手势，调整焦距
+    BOOL allTouchesAreOnThePreviewLayer = YES;
+    NSUInteger numTouches = [recognizer numberOfTouches], i;
+    for ( i = 0; i < numTouches; ++i ) {
+        CGPoint location = [recognizer locationOfTouch:i inView:self.bgView];
+        CGPoint convertedLocation = [self.previewLayer convertPoint:location fromLayer:self.previewLayer.superlayer];
+        if ( ! [self.previewLayer containsPoint:convertedLocation] ) {
+            allTouchesAreOnThePreviewLayer = NO;
+            break;
+        }
+    }
+    
+    if ( allTouchesAreOnThePreviewLayer ) {
+        
+        
+        _effectiveScale = _beginGestureScale * recognizer.scale;
+        if (_effectiveScale < 1.0){
+            _effectiveScale = 1.0;
+        }
+        
+        NSLog(@"%f-------------->%f------------recognizerScale%f",_effectiveScale,_beginGestureScale,recognizer.scale);
+        
+        CGFloat maxScaleAndCropFactor = [[self.stillImageOutput connectionWithMediaType:AVMediaTypeVideo] videoMaxScaleAndCropFactor];
+        
+        NSLog(@"%f",maxScaleAndCropFactor);
+        if (_effectiveScale > maxScaleAndCropFactor)
+            _effectiveScale = maxScaleAndCropFactor;
+        
+        [CATransaction begin];
+        [CATransaction setAnimationDuration:.025];
+        [self.previewLayer setAffineTransform:CGAffineTransformMakeScale(_effectiveScale, _effectiveScale)];
+        [CATransaction commit];
+        
+    }
+}
+
 #pragma mark - TakePhoto
 - (void)onHitBtnTakePhoto:(id)sender {
     AVCaptureConnection *stillImageConnection = [self.stillImageOutput connectionWithMediaType:AVMediaTypeVideo];
     UIDeviceOrientation curDeviceOrientation = [[UIDevice currentDevice] orientation];
     AVCaptureVideoOrientation avcaptureOrientation = [self avOrientationForDeviceOrientation:curDeviceOrientation];
     [stillImageConnection setVideoOrientation:avcaptureOrientation];
-    [stillImageConnection setVideoScaleAndCropFactor:1];
+    // 控制焦距
+    [stillImageConnection setVideoScaleAndCropFactor:_effectiveScale];
     
     [self.stillImageOutput captureStillImageAsynchronouslyFromConnection:stillImageConnection completionHandler:^(CMSampleBufferRef imageDataSampleBuffer, NSError *error) {
         
@@ -189,7 +300,7 @@
         CFDictionaryRef attachments = CMCopyDictionaryOfAttachments(kCFAllocatorDefault,
                                                                     imageDataSampleBuffer,
                                                                     kCMAttachmentMode_ShouldPropagate);
-        
+        // 判断相册权限
         ALAuthorizationStatus author = [ALAssetsLibrary authorizationStatus];
         if (author == ALAuthorizationStatusRestricted || author == ALAuthorizationStatusDenied){
             //无权限
@@ -202,11 +313,37 @@
         // TODO:test，测试为看照片，加入提示框，展示照片
         NSString *space = @"\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n";
         UIAlertController *alertController = [UIAlertController alertControllerWithTitle:@"" message:space preferredStyle:UIAlertControllerStyleAlert];
+        // width = 270;
+        CGFloat imgViewWidth = 270 - 2*15;
+        UIImageView *alertImageView = [[UIImageView alloc] initWithFrame:CGRectMake(15, 15, imgViewWidth, imgViewWidth*4/3)];
+        // 裁剪照片
+        CGFloat screenWidth = [UIScreen mainScreen].bounds.size.width;
+        CGFloat screenHeight = [UIScreen mainScreen].bounds.size.height;
+        CGFloat margionLeft = 15;
+        CGFloat holeWidth = screenWidth - 2*margionLeft;
+        CGFloat holeHeight = holeWidth * 4/3;
+        CGRect rect = CGRectMake(margionLeft, (screenHeight-holeHeight)/2, holeWidth, holeHeight);
+        // TODO:  此时得到的image的scale为1，imageOrientation为right
+        UIImage *imageTem = [UIImage imageWithData:jpegData scale:1];
+        // 重绘image
+        UIGraphicsBeginImageContext(CGSizeMake(self.view.frame.size.width, self.view.frame.size.height));
+        [imageTem drawInRect:CGRectMake(0, 0, self.view.frame.size.width, self.view.frame.size.height)];
+        imageTem = UIGraphicsGetImageFromCurrentImageContext();
+        UIGraphicsEndImageContext();
+        // 裁剪图片
+        UIImage *clippedImage = [UIImage cropImageWithImage:imageTem inRect:rect];
+        alertImageView.image = clippedImage;
+        [alertController.view addSubview:alertImageView];
+
+        // 保存裁剪后的图片到相册
+        // TODO：照片保存到相册之前需要旋转
+        jpegData = UIImageJPEGRepresentation(clippedImage, 1);
         
+        // set UIAlertAction
         UIAlertAction *confirmAction = [UIAlertAction actionWithTitle:@"保存" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
             // 将图片保存到相册
             [library writeImageDataToSavedPhotosAlbum:jpegData metadata:(__bridge id)attachments completionBlock:^(NSURL *assetURL, NSError *error) {
-                
+            
             }];
         }];
         UIAlertAction *cancelAction = [UIAlertAction actionWithTitle:@"取消" style:UIAlertActionStyleCancel handler:^(UIAlertAction * _Nonnull action) {
@@ -214,20 +351,6 @@
         [alertController addAction:confirmAction];
         [alertController addAction:cancelAction];
     
-        // width = 270;
-        CGFloat imgViewWidth = 270 - 2*15;
-        UIImageView *alertImageView = [[UIImageView alloc] initWithFrame:CGRectMake(15, 15, imgViewWidth, imgViewWidth*4/3)];
-        // 裁剪照片
-        UIImage *imageTem = [UIImage imageWithData:jpegData];
-        CGFloat screenWidth = [UIScreen mainScreen].bounds.size.width;
-        CGFloat screenHeight = [UIScreen mainScreen].bounds.size.height;
-        CGFloat margionLeft = 15;
-        CGFloat holeWidth = screenWidth - 2*margionLeft;
-        CGFloat holeHeight = holeWidth * 4/3;
-        CGRect rect = CGRectMake(margionLeft, (screenHeight - holeWidth)/2, holeWidth, holeHeight);
-//        alertImageView.image = [self clipImageWithOriginalImage:imageTem inRect:rect];
-        alertImageView.image = [UIImage imageWithData:jpegData];
-        [alertController.view addSubview:alertImageView];
         [self presentViewController:alertController animated:YES completion:nil];
     }];
 }
@@ -242,17 +365,14 @@
     return result;
 }
 
-- (UIImage *)clipImageWithOriginalImage:(UIImage *)image inRect:(CGRect)rect {
-    //将UIImage转换成CGImageRef
-    CGImageRef sourceImageRef = [image CGImage];
-    //按照给定的矩形区域进行剪裁
-    CGImageRef newImageRef = CGImageCreateWithImageInRect(sourceImageRef, rect);
-    //将CGImageRef转换成UIImage
-    UIImage *newImage = [UIImage imageWithCGImage:newImageRef];
-    //返回剪裁后的图片
-    return newImage;
+#pragma mark - UIGestureRecognizerDelegate
+- (BOOL)gestureRecognizerShouldBegin:(UIGestureRecognizer *)gestureRecognizer
+{
+    if ( [gestureRecognizer isKindOfClass:[UIPinchGestureRecognizer class]] ) {
+        _beginGestureScale = _effectiveScale;
+    }
+    return YES;
 }
-
 
 - (void)didReceiveMemoryWarning {
     [super didReceiveMemoryWarning];

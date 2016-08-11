@@ -7,6 +7,12 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		012F6F421D5B257B00806CBF /* face.png in Resources */ = {isa = PBXBuildFile; fileRef = 012F6F3E1D5B257B00806CBF /* face.png */; };
+		012F6F431D5B257B00806CBF /* scan_corner@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 012F6F3F1D5B257B00806CBF /* scan_corner@2x.png */; };
+		012F6F441D5B257B00806CBF /* scan_corner@3x.png in Resources */ = {isa = PBXBuildFile; fileRef = 012F6F401D5B257B00806CBF /* scan_corner@3x.png */; };
+		012F6F4E1D5C16B800806CBF /* CameraToolBarView.m in Sources */ = {isa = PBXBuildFile; fileRef = 012F6F4D1D5C16B800806CBF /* CameraToolBarView.m */; };
+		012F6F531D5C259100806CBF /* UIActionSheet+Blocks.m in Sources */ = {isa = PBXBuildFile; fileRef = 012F6F501D5C259100806CBF /* UIActionSheet+Blocks.m */; };
+		012F6F541D5C259100806CBF /* UIImage+ClipImage.m in Sources */ = {isa = PBXBuildFile; fileRef = 012F6F521D5C259100806CBF /* UIImage+ClipImage.m */; };
 		0184C9051D59D6C500B5E43E /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 0184C9041D59D6C500B5E43E /* main.m */; };
 		0184C9081D59D6C500B5E43E /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 0184C9071D59D6C500B5E43E /* AppDelegate.m */; };
 		0184C90E1D59D6C500B5E43E /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 0184C90C1D59D6C500B5E43E /* Main.storyboard */; };
@@ -15,12 +21,18 @@
 		0184C91C1D59DE5500B5E43E /* TestNavigationViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 0184C91B1D59DE5500B5E43E /* TestNavigationViewController.m */; };
 		0184C9221D59E54700B5E43E /* HollowOutView.m in Sources */ = {isa = PBXBuildFile; fileRef = 0184C9211D59E54700B5E43E /* HollowOutView.m */; };
 		0184C9251D5ABF3900B5E43E /* CameraViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 0184C9241D5ABF3900B5E43E /* CameraViewController.m */; };
-		018BC81E1D5ACF56001B8582 /* face.png in Resources */ = {isa = PBXBuildFile; fileRef = 018BC81D1D5ACF56001B8582 /* face.png */; };
-		018BC8211D5ACFBF001B8582 /* scan_corner@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 018BC81F1D5ACFBF001B8582 /* scan_corner@2x.png */; };
-		018BC8221D5ACFBF001B8582 /* scan_corner@3x.png in Resources */ = {isa = PBXBuildFile; fileRef = 018BC8201D5ACFBF001B8582 /* scan_corner@3x.png */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		012F6F3E1D5B257B00806CBF /* face.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = face.png; sourceTree = "<group>"; };
+		012F6F3F1D5B257B00806CBF /* scan_corner@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "scan_corner@2x.png"; sourceTree = "<group>"; };
+		012F6F401D5B257B00806CBF /* scan_corner@3x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "scan_corner@3x.png"; sourceTree = "<group>"; };
+		012F6F4C1D5C16B800806CBF /* CameraToolBarView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CameraToolBarView.h; sourceTree = "<group>"; };
+		012F6F4D1D5C16B800806CBF /* CameraToolBarView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CameraToolBarView.m; sourceTree = "<group>"; };
+		012F6F4F1D5C259100806CBF /* UIActionSheet+Blocks.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "UIActionSheet+Blocks.h"; sourceTree = "<group>"; };
+		012F6F501D5C259100806CBF /* UIActionSheet+Blocks.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "UIActionSheet+Blocks.m"; sourceTree = "<group>"; };
+		012F6F511D5C259100806CBF /* UIImage+ClipImage.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "UIImage+ClipImage.h"; sourceTree = "<group>"; };
+		012F6F521D5C259100806CBF /* UIImage+ClipImage.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "UIImage+ClipImage.m"; sourceTree = "<group>"; };
 		0184C9001D59D6C500B5E43E /* TestForCamera.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = TestForCamera.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		0184C9041D59D6C500B5E43E /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
 		0184C9061D59D6C500B5E43E /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
@@ -35,9 +47,6 @@
 		0184C9211D59E54700B5E43E /* HollowOutView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = HollowOutView.m; sourceTree = "<group>"; };
 		0184C9231D5ABF3900B5E43E /* CameraViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CameraViewController.h; sourceTree = "<group>"; };
 		0184C9241D5ABF3900B5E43E /* CameraViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CameraViewController.m; sourceTree = "<group>"; };
-		018BC81D1D5ACF56001B8582 /* face.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = face.png; sourceTree = "<group>"; };
-		018BC81F1D5ACFBF001B8582 /* scan_corner@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "scan_corner@2x.png"; sourceTree = "<group>"; };
-		018BC8201D5ACFBF001B8582 /* scan_corner@3x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "scan_corner@3x.png"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -51,6 +60,44 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		012F6F3C1D5B257B00806CBF /* Common */ = {
+			isa = PBXGroup;
+			children = (
+				012F6F461D5B25B400806CBF /* Category */,
+				012F6F3D1D5B257B00806CBF /* Resource */,
+				012F6F411D5B257B00806CBF /* Vendor */,
+			);
+			path = Common;
+			sourceTree = "<group>";
+		};
+		012F6F3D1D5B257B00806CBF /* Resource */ = {
+			isa = PBXGroup;
+			children = (
+				012F6F3E1D5B257B00806CBF /* face.png */,
+				012F6F3F1D5B257B00806CBF /* scan_corner@2x.png */,
+				012F6F401D5B257B00806CBF /* scan_corner@3x.png */,
+			);
+			path = Resource;
+			sourceTree = "<group>";
+		};
+		012F6F411D5B257B00806CBF /* Vendor */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = Vendor;
+			sourceTree = "<group>";
+		};
+		012F6F461D5B25B400806CBF /* Category */ = {
+			isa = PBXGroup;
+			children = (
+				012F6F4F1D5C259100806CBF /* UIActionSheet+Blocks.h */,
+				012F6F501D5C259100806CBF /* UIActionSheet+Blocks.m */,
+				012F6F511D5C259100806CBF /* UIImage+ClipImage.h */,
+				012F6F521D5C259100806CBF /* UIImage+ClipImage.m */,
+			);
+			path = Category;
+			sourceTree = "<group>";
+		};
 		0184C8F71D59D6C500B5E43E = {
 			isa = PBXGroup;
 			children = (
@@ -70,11 +117,13 @@
 		0184C9021D59D6C500B5E43E /* TestForCamera */ = {
 			isa = PBXGroup;
 			children = (
-				018BC81C1D5ACF35001B8582 /* Resource */,
+				012F6F3C1D5B257B00806CBF /* Common */,
 				0184C9061D59D6C500B5E43E /* AppDelegate.h */,
 				0184C9071D59D6C500B5E43E /* AppDelegate.m */,
 				0184C91A1D59DE5500B5E43E /* TestNavigationViewController.h */,
 				0184C91B1D59DE5500B5E43E /* TestNavigationViewController.m */,
+				012F6F4C1D5C16B800806CBF /* CameraToolBarView.h */,
+				012F6F4D1D5C16B800806CBF /* CameraToolBarView.m */,
 				0184C9231D5ABF3900B5E43E /* CameraViewController.h */,
 				0184C9241D5ABF3900B5E43E /* CameraViewController.m */,
 				0184C9201D59E54700B5E43E /* HollowOutView.h */,
@@ -94,16 +143,6 @@
 				0184C9041D59D6C500B5E43E /* main.m */,
 			);
 			name = "Supporting Files";
-			sourceTree = "<group>";
-		};
-		018BC81C1D5ACF35001B8582 /* Resource */ = {
-			isa = PBXGroup;
-			children = (
-				018BC81F1D5ACFBF001B8582 /* scan_corner@2x.png */,
-				018BC8201D5ACFBF001B8582 /* scan_corner@3x.png */,
-				018BC81D1D5ACF56001B8582 /* face.png */,
-			);
-			path = Resource;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -164,11 +203,11 @@
 			buildActionMask = 2147483647;
 			files = (
 				0184C9131D59D6C500B5E43E /* LaunchScreen.storyboard in Resources */,
-				018BC8211D5ACFBF001B8582 /* scan_corner@2x.png in Resources */,
+				012F6F431D5B257B00806CBF /* scan_corner@2x.png in Resources */,
 				0184C9101D59D6C500B5E43E /* Assets.xcassets in Resources */,
-				018BC81E1D5ACF56001B8582 /* face.png in Resources */,
+				012F6F421D5B257B00806CBF /* face.png in Resources */,
 				0184C90E1D59D6C500B5E43E /* Main.storyboard in Resources */,
-				018BC8221D5ACFBF001B8582 /* scan_corner@3x.png in Resources */,
+				012F6F441D5B257B00806CBF /* scan_corner@3x.png in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -181,9 +220,12 @@
 			files = (
 				0184C91C1D59DE5500B5E43E /* TestNavigationViewController.m in Sources */,
 				0184C9221D59E54700B5E43E /* HollowOutView.m in Sources */,
+				012F6F541D5C259100806CBF /* UIImage+ClipImage.m in Sources */,
 				0184C9251D5ABF3900B5E43E /* CameraViewController.m in Sources */,
+				012F6F4E1D5C16B800806CBF /* CameraToolBarView.m in Sources */,
 				0184C9081D59D6C500B5E43E /* AppDelegate.m in Sources */,
 				0184C9051D59D6C500B5E43E /* main.m in Sources */,
+				012F6F531D5C259100806CBF /* UIActionSheet+Blocks.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

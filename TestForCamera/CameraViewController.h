@@ -10,6 +10,6 @@
 #import <AVFoundation/AVFoundation.h>
 #import <AssetsLibrary/AssetsLibrary.h>
 
-@interface CameraViewController : UIViewController<AVCaptureMetadataOutputObjectsDelegate>
+@interface CameraViewController : UIViewController<UIGestureRecognizerDelegate, UIActionSheetDelegate>
 
 @end

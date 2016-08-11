@@ -10,4 +10,6 @@
 
 @interface UIImage (ClipImage)
 
++ (UIImage *)cropImageWithImage:(UIImage *)image inRect:(CGRect)cropRect;
+
 @end
