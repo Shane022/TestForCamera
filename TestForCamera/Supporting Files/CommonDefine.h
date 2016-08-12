@@ -9,5 +9,12 @@
 #ifndef CommonDefine_h
 #define CommonDefine_h
 
+// 选择分辨率
+//#define SETSESSIONPRESET
+// 选择图片压缩
+#define SETIMAGECOMPRESS
 
-#endif /* CommonDefine_h */
+// 打开开启点击手势对焦
+//#define FOCUSING
+
+#endif

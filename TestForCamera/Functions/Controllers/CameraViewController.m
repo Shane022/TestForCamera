@@ -11,8 +11,8 @@
 #import "UIImage+ClipImage.h"
 #import "CameraToolBarView.h"
 #import "UIActionSheet+Blocks.h"
+#import "AFHTTPRequestOperationManager.h"
 
-//#define FOCUSING
 typedef void(^PropertyChangeBlock)(AVCaptureDevice *captureDevice);
 
 @interface CameraViewController ()
@@ -340,64 +340,90 @@ typedef void(^PropertyChangeBlock)(AVCaptureDevice *captureDevice);
     [stillImageConnection setVideoScaleAndCropFactor:_effectiveScale];
     
     [self.stillImageOutput captureStillImageAsynchronouslyFromConnection:stillImageConnection completionHandler:^(CMSampleBufferRef imageDataSampleBuffer, NSError *error) {
-        
         NSData *jpegData = [AVCaptureStillImageOutput jpegStillImageNSDataRepresentation:imageDataSampleBuffer];
-        CFDictionaryRef attachments = CMCopyDictionaryOfAttachments(kCFAllocatorDefault,
-                                                                    imageDataSampleBuffer,
-                                                                    kCMAttachmentMode_ShouldPropagate);
-        // 判断相册权限
-        ALAuthorizationStatus author = [ALAssetsLibrary authorizationStatus];
-        if (author == ALAuthorizationStatusRestricted || author == ALAuthorizationStatusDenied){
-            //无权限
-            UIAlertView *alertView = [[UIAlertView alloc] initWithTitle:@"相册授权" message:@"没有获得相册授权，无法保存照片到相册" delegate:self cancelButtonTitle:@"取消" otherButtonTitles: nil];
-            [alertView show];
-            return ;
-        }
-        ALAssetsLibrary *library = [[ALAssetsLibrary alloc] init];
-     
-        // TODO:test，测试为看照片，加入提示框，展示照片
-        NSString *space = @"\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n";
-        UIAlertController *alertController = [UIAlertController alertControllerWithTitle:@"" message:space preferredStyle:UIAlertControllerStyleAlert];
-        // width = 270;
-        CGFloat imgViewWidth = 270 - 2*15;
-        UIImageView *alertImageView = [[UIImageView alloc] initWithFrame:CGRectMake(15, 15, imgViewWidth, imgViewWidth*4/3)];
-        // 裁剪照片
-        CGFloat screenWidth = [UIScreen mainScreen].bounds.size.width;
-        CGFloat screenHeight = [UIScreen mainScreen].bounds.size.height;
-        CGFloat margionLeft = 15;
-        CGFloat holeWidth = screenWidth - 2*margionLeft;
-        CGFloat holeHeight = holeWidth * 4/3;
-        CGRect rect = CGRectMake(margionLeft, (screenHeight-holeHeight)/2, holeWidth, holeHeight);
-        // TODO:  此时得到的image的scale为1，imageOrientation为right
-        UIImage *imageTem = [UIImage imageWithData:jpegData scale:[UIScreen mainScreen].scale];
-        // 重绘image
-//        UIGraphicsBeginImageContext(imageTem.size);
-        UIGraphicsBeginImageContext(self.view.frame.size);
-        [imageTem drawInRect:CGRectMake(0, 0, self.view.frame.size.width, self.view.frame.size.height)];
-        imageTem = UIGraphicsGetImageFromCurrentImageContext();
-        UIGraphicsEndImageContext();
-        // 裁剪图片
-        UIImage *clippedImage = [UIImage cropImageWithImage:imageTem inRect:rect];
-        alertImageView.image = clippedImage;
-        [alertController.view addSubview:alertImageView];
+        // 保存到相册
+        [self saveImageToPhotosAlbumWithConnection:imageDataSampleBuffer andPhotoData:jpegData];
+    }];
+}
 
-        // 保存裁剪后的图片到相册
-        // TODO：照片保存到相册之前需要旋转
-        jpegData = UIImageJPEGRepresentation(clippedImage, _compressionQuality);
-        
-        // set UIAlertAction
-        UIAlertAction *confirmAction = [UIAlertAction actionWithTitle:@"保存" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
-            // 将图片保存到相册
-            [library writeImageDataToSavedPhotosAlbum:jpegData metadata:(__bridge id)attachments completionBlock:^(NSURL *assetURL, NSError *error) {
-            
-            }];
-        }];
-        UIAlertAction *cancelAction = [UIAlertAction actionWithTitle:@"取消" style:UIAlertActionStyleCancel handler:^(UIAlertAction * _Nonnull action) {
-        }];
-        [alertController addAction:confirmAction];
-        [alertController addAction:cancelAction];
+- (void)saveImageToPhotosAlbumWithConnection:(CMSampleBufferRef )imageDataSampleBuffer andPhotoData:(NSData *)jpegData {
+    CFDictionaryRef attachments = CMCopyDictionaryOfAttachments(kCFAllocatorDefault,
+                                                                imageDataSampleBuffer,
+                                                                kCMAttachmentMode_ShouldPropagate);
+    // 判断相册权限
+    ALAuthorizationStatus author = [ALAssetsLibrary authorizationStatus];
+    if (author == ALAuthorizationStatusRestricted || author == ALAuthorizationStatusDenied){
+        //无权限
+        UIAlertView *alertView = [[UIAlertView alloc] initWithTitle:@"相册授权" message:@"没有获得相册授权，无法保存照片到相册" delegate:self cancelButtonTitle:@"取消" otherButtonTitles: nil];
+        [alertView show];
+        return ;
+    }
+    ALAssetsLibrary *library = [[ALAssetsLibrary alloc] init];
     
-        [self presentViewController:alertController animated:YES completion:nil];
+    // TODO:test，测试为看照片，加入提示框，展示照片
+    NSString *space = @"\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n";
+    UIAlertController *alertController = [UIAlertController alertControllerWithTitle:@"" message:space preferredStyle:UIAlertControllerStyleAlert];
+    // width = 270;
+    CGFloat imgViewWidth = 270 - 2*15;
+    UIImageView *alertImageView = [[UIImageView alloc] initWithFrame:CGRectMake(15, 15, imgViewWidth, imgViewWidth*4/3)];
+    // 裁剪照片
+    CGFloat screenWidth = [UIScreen mainScreen].bounds.size.width;
+    CGFloat screenHeight = [UIScreen mainScreen].bounds.size.height;
+    CGFloat margionLeft = 15;
+    CGFloat holeWidth = screenWidth - 2*margionLeft;
+    CGFloat holeHeight = holeWidth * 4/3;
+    CGRect rect = CGRectMake(margionLeft, (screenHeight-holeHeight)/2, holeWidth, holeHeight);
+    // TODO:  此时得到的image的scale为1，imageOrientation为right
+    UIImage *imageTem = [UIImage imageWithData:jpegData scale:[UIScreen mainScreen].scale];
+    // 重绘image
+    //        UIGraphicsBeginImageContext(imageTem.size);
+    UIGraphicsBeginImageContext(self.view.frame.size);
+    [imageTem drawInRect:CGRectMake(0, 0, self.view.frame.size.width, self.view.frame.size.height)];
+    imageTem = UIGraphicsGetImageFromCurrentImageContext();
+    UIGraphicsEndImageContext();
+    // 裁剪图片
+    UIImage *clippedImage = [UIImage cropImageWithImage:imageTem inRect:rect];
+    alertImageView.image = clippedImage;
+    [alertController.view addSubview:alertImageView];
+    
+    // 保存裁剪后的图片到相册
+    // TODO：照片保存到相册之前需要旋转
+    jpegData = UIImageJPEGRepresentation(clippedImage, _compressionQuality);
+    NSLog(@"saved Image size is :%ld k", (long)jpegData.length/1024);
+    
+    
+    // set UIAlertAction
+    UIAlertAction *confirmAction = [UIAlertAction actionWithTitle:@"保存" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
+        // 将图片保存到相册
+        [library writeImageDataToSavedPhotosAlbum:jpegData metadata:(__bridge id)attachments completionBlock:^(NSURL *assetURL, NSError *error) {
+            
+        }];
+    }];
+    UIAlertAction *cancelAction = [UIAlertAction actionWithTitle:@"取消" style:UIAlertActionStyleCancel handler:^(UIAlertAction * _Nonnull action) {
+    }];
+    [alertController addAction:confirmAction];
+    [alertController addAction:cancelAction];
+    
+    [self presentViewController:alertController animated:YES completion:nil];
+}
+
+- (void)upLoadImageData:(NSData *)jpegData {
+    // 以当前时间为图片名
+    NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
+    NSDate *date = [NSDate date];
+    [dateFormatter setDateFormat:@"yyyyMMddHHmmss"];
+    NSString *imageName = [dateFormatter stringFromDate:date];
+    // 上传图片到服务器
+    NSString *strUrl = @"";
+    AFHTTPRequestOperationManager *manager = [AFHTTPRequestOperationManager manager];
+    manager.requestSerializer = [AFHTTPRequestSerializer serializer];
+    manager.responseSerializer = [AFJSONResponseSerializer serializer];
+    [manager POST:strUrl parameters:nil constructingBodyWithBlock:^(id<AFMultipartFormData> formData) {
+        [formData appendPartWithFileData:jpegData name:@"testImages" fileName:imageName mimeType:@"image/jpeg"];
+    } success:^(AFHTTPRequestOperation *operation, id responseObject) {
+        NSLog(@"upload success");
+    } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
+        NSLog(@"uplaod failed");
     }];
 }
 

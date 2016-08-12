@@ -8,8 +8,6 @@
 
 #import "CameraToolBarView.h"
 
-#define SETPRESETANDCOMPRESS
-
 @implementation CameraToolBarView
 
 @synthesize btnSessionPreset, btnImageCompress, btnSwitchCamera, btnSnap;
@@ -41,18 +39,22 @@
     [btnSwitchCamera setTitle:@"旋转" forState:UIControlStateNormal];
     [btnSwitchCamera.titleLabel setFont:[UIFont systemFontOfSize:14]];
     [self addSubview:btnSwitchCamera];
+#ifdef SETIMAGECOMPRESS
     // 设置UIImageJPEGRepresentation，图片压缩比
     btnImageCompress = [UIButton buttonWithType:UIButtonTypeCustom];
     btnImageCompress.frame = CGRectMake(btnSwitchCamera.frame.origin.x-btnGap-btnWidth, margionTop, btnWidth, btnHeight);
     [btnImageCompress setTitle:@"压缩比" forState:UIControlStateNormal];
     [btnImageCompress.titleLabel setFont:[UIFont systemFontOfSize:14]];
     [self addSubview:btnImageCompress];
+#endif
+#ifdef SETSESSIONPRESET
     // 设置AVCaptureSessionPreset，拍摄相片的质量
     btnSessionPreset = [UIButton buttonWithType:UIButtonTypeCustom];
     btnSessionPreset.frame = CGRectMake(btnImageCompress.frame.origin.x-btnGap-btnWidth, margionTop, btnWidth, btnHeight);
     [btnSessionPreset setTitle:@"分辨率" forState:UIControlStateNormal];
     [btnSessionPreset.titleLabel setFont:[UIFont systemFontOfSize:14]];
     [self addSubview:btnSessionPreset];
+#endif
 }
 
 /*
